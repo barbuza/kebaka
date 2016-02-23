@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es3",
+    "noImplicitAny": true
+  },
+  "files": [
+    "node_modules/immutable/dist/immutable.d.ts",
+    "src/types.ts",
+    "src/emitter.ts",
+    "src/bindable.ts"
+  ]
+}
