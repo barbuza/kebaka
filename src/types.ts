@@ -1,16 +1,18 @@
-'use strict';
+export interface AnyListener {
+  (value:any):void;
+}
 
-module Kebaka {
+export interface AnyMapper {
+  (value:any):any;
+}
 
-  export type Listener<T> = (value:T) => void;
-  export type AnyListener = Listener<any>;
+export interface Emitter {
+  addListener(listener:AnyListener):this;
+  removeListener(listener:AnyListener):this;
+  emit(value:any):void;
+}
 
-  type Mapper<T, R> = (value:T) => R;
-  export type AnyMapper = Mapper<any, any>;
-
-  export type RefKey = string;
-
-  export type Key = string | number;
-  export type KeyPath = Immutable.List<Key>;
-
+export interface Bindable extends Emitter {
+  bind(mapper:AnyMapper):Bindable;
+  bindJS(mapper:AnyMapper):Bindable;
 }

@@ -1,10 +1,9 @@
 import * as Immutable from 'immutable';
 
-import {Emitter} from './emitter';
-import {AnyListener} from './types';
-import {NO_VALUE} from './const';
+import {Emitter, AnyListener} from './types';
 
 let open = 0;
+const NO_VALUE = {};
 
 export class ImmutableEmitter implements Emitter {
 

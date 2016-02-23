@@ -1,26 +1,30 @@
 import * as Immutable from 'immutable';
-import {AnyListener, AnyMapper, RefKey, Key, KeyPath} from './types';
-import {Bindable} from './bindable';
+
+import {AnyListener, AnyMapper, Bindable} from './types';
 import {ImmutableEmitter} from './immutable-emitter';
-import {Ref, RefMap, ref} from './ref';
-import makeJSMapper from './make-js-mapper';
+import {makeJSMapper} from './make-js-mapper';
+import {Ref} from './ref';
+import {Chain} from './chain';
 
-const EMPTY_KEY_PATH:KeyPath = Immutable.List<Key>();
-const EMPTY_KEY_PATH_MAP:RefMap = Immutable.Map<KeyPath, Ref>();
+type Key = string | number;
+type KeyPath = Immutable.List<Key>;
+type RefMap = Immutable.Map<KeyPath, Ref>;
 
-let open = 0;
+const emptyKeyPath = Immutable.List<Key>();
+const emptyRefs = Immutable.Map<KeyPath, Ref>();
+const emptyKeyPathListeners = Immutable.Map<KeyPath, AnyListener>();
 
-function findRefs(value:any, prefix:KeyPath = EMPTY_KEY_PATH):RefMap {
+function findRefs(value:any, prefix:KeyPath = emptyKeyPath):RefMap {
   if (value instanceof Ref) {
-    return EMPTY_KEY_PATH_MAP.set(prefix, value);
+    return emptyRefs.set(prefix, value);
   }
   if (value instanceof Immutable.Iterable) {
     return value.reduce(
       (refs:RefMap, child:any, key:Key) => refs.mergeDeep(findRefs(child, prefix.push(key))),
-      EMPTY_KEY_PATH_MAP
+      emptyRefs
     );
   }
-  return EMPTY_KEY_PATH_MAP;
+  return emptyRefs;
 }
 
 function hasRefs(value:any):boolean {
@@ -33,13 +37,11 @@ function hasRefs(value:any):boolean {
   return false;
 }
 
-const EMPTY_KEYPATH_LISTENERS = Immutable.Map<KeyPath, AnyListener>();
+export class Container extends ImmutableEmitter implements Bindable {
 
-class Container extends ImmutableEmitter implements Bindable {
-
-  protected keyPathListeners = EMPTY_KEYPATH_LISTENERS;
-  protected source:Immutable.List<any>|Immutable.Map<any, any>;
-  protected value:Immutable.List<any>|Immutable.Map<any, any>;
+  protected keyPathListeners = emptyKeyPathListeners;
+  protected source:any;
+  protected value:any;
   protected refs:RefMap;
 
   constructor(source:any) {
@@ -83,7 +85,7 @@ class Container extends ImmutableEmitter implements Bindable {
   }
 
   bind(mapper:AnyMapper):Chain {
-    return new Chain(this.source, Immutable.List.of(mapper));
+    return new Chain(this, Immutable.List.of(mapper));
   }
 
   bindJS(mapper:AnyMapper):Chain {
@@ -95,104 +97,3 @@ class Container extends ImmutableEmitter implements Bindable {
   }
 
 }
-
-const NO_MAPPERS = Immutable.List<AnyMapper>();
-const EMPTY_CONTAINERS = Immutable.List<Container>();
-const EMPTY_INDEX_LISTENERS = Immutable.Map<number, AnyListener>();
-
-class Chain extends ImmutableEmitter implements Bindable {
-
-  protected source:Container;
-  protected mappers:Immutable.List<AnyMapper>;
-
-  protected containers:Immutable.List<Container> = EMPTY_CONTAINERS;
-  protected indexListeners:Immutable.Map<number, AnyListener> = EMPTY_INDEX_LISTENERS;
-
-  constructor(source:any, mappers:Immutable.List<AnyMapper> = NO_MAPPERS) {
-    super();
-    this.mappers = mappers;
-    this.source = source instanceof Container ? source : new Container(source);
-  }
-
-  protected open() {
-    super.open();
-
-    this.setContainer(0, this.source);
-  }
-
-  protected close() {
-    super.close();
-
-    this.containers.forEach((container, containerIndex) =>
-      container.removeListener(this.indexListener(containerIndex)));
-
-    this.containers = EMPTY_CONTAINERS;
-  }
-
-  indexListener(index:number) {
-    if (!this.indexListeners.has(index)) {
-      this.indexListeners = this.indexListeners.set(index, this.updateItem.bind(this, index));
-    }
-    return this.indexListeners.get(index);
-  }
-
-  bind(mapper:AnyMapper):Chain {
-    return new Chain(this.source, this.mappers.push(mapper));
-  }
-
-  bindJS(mapper:AnyMapper):Chain {
-    return this.bind(makeJSMapper(mapper));
-  }
-
-  updateItem(index:number, value:Immutable.Iterable<Key, any>) {
-    if (index === this.mappers.size) {
-      this.emit(value);
-      return;
-    }
-
-    const mapper = this.mappers.get(index);
-    const nextValue = mapper(value);
-    this.setContainer(index + 1, new Container(nextValue));
-  }
-
-  setContainer(index:number, container:Container) {
-    const oldContainer = this.containers.get(index);
-
-    if (Immutable.is(oldContainer, container)) {
-      return;
-    }
-
-    this.containers.slice(index)
-      .forEach((container, containerIndex) =>
-        container.removeListener(this.indexListener(containerIndex)));
-
-    this.containers = this.containers.slice(0, index).toList().set(index, container);
-
-    container.addListener(this.indexListener(index));
-  }
-
-}
-
-function onValue(value:any) {
-  console.log('--->', value);
-}
-
-const c = new Chain({a: ref('/a'), b: ref('/b')})
-  .bind((value:any) => value.merge({e: ref('/e')}))
-  .bind((value:any) => value.merge({d: ref('/d')}))
-  .addListener(onValue);
-
-const c2 = c
-  .bindJS((value:{b: string}) => ({a: value.b}))
-  .addListener(onValue);
-
-// ref('/a').map(x => ({x})).addListener(value => console.log('-->', value));
-
-ref('/a').emit('ref a value');
-ref('/b').emit('ref b value');
-ref('/e').emit('ref e value');
-ref('/d').emit('ref d value');
-ref('/Y').emit('YYYY');
-
-c.removeListener(onValue);
-c2.removeListener(onValue);

@@ -1,20 +1,23 @@
 {
   "name": "kebaka",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.1.0",
+  "description": "immutable firebase wrapper",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prepublish": "npm run build && npm test",
+    "build": "tsc",
+    "test": "tape -r babel-register tests/*.js"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "typescript": "^1.9.0-dev.20160222"
+    "babel-preset-es2015": "^6.5.0",
+    "babel-register": "^6.5.2",
+    "tape": "^4.4.0",
+    "ts-node": "^0.5.5",
+    "typescript": "^1.8.2"
   },
   "dependencies": {
-    "babel": "^6.5.2",
-    "babel-cli": "^6.5.1",
-    "babel-preset-es2015": "^6.5.0",
     "immutable": "^3.7.6"
   }
 }

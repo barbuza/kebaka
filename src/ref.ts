@@ -1,12 +1,12 @@
-import {List} from 'immutable';
+import * as Immutable from 'immutable';
 
-import {AnyMapper, RefKey, KeyPath} from './types';
-import {Bindable} from './bindable';
+import {Bindable, AnyMapper} from './types';
 import {ImmutableEmitter} from './immutable-emitter';
-import makeJSMapper from './make-js-mapper';
+import {makeJSMapper} from './make-js-mapper'
 import {Chain} from './chain';
+import {Container} from './container';
 
-export type RefMap = Immutable.Map<KeyPath, Ref>;
+type RefKey = string;
 
 let refs = Immutable.Map<RefKey, Ref>();
 
@@ -24,16 +24,22 @@ export class Ref extends ImmutableEmitter implements Bindable {
   }
 
   bind(mapper:AnyMapper):Chain {
-    return new Chain(this, List.of(mapper));
+    return new Chain(new Container(this), Immutable.List.of(mapper));
   }
 
   bindJS(mapper:AnyMapper):Chain {
     return this.bind(makeJSMapper(mapper));
   }
 
+  close() {
+    super.close();
+
+    refs = refs.remove(this.key());
+  }
+
 }
 
-export function ref(path:string):Ref {
+export function ref(path:string = '/'):Ref {
   const ref = new Ref(path);
   if (refs.has(ref.key())) {
     return refs.get(ref.key());
