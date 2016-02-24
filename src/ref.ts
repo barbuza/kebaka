@@ -6,8 +6,8 @@ import {Chain} from './chain';
 
 type RefKey = string;
 
-let refValues = Immutable.Map<RefKey, any>();
-let refListeners = Immutable.Map<RefKey, Immutable.List<Listener>>();
+const refValues = Immutable.Map<RefKey, any>().asMutable();
+const refListeners = Immutable.Map<RefKey, Immutable.List<Listener>>().asMutable();
 
 export class Ref implements Bindable {
 
@@ -23,12 +23,12 @@ export class Ref implements Bindable {
 
   addListener(listener:Listener):this {
     if (!refListeners.has(this.key())) {
-      refListeners = refListeners.set(
+      refListeners.set(
         this.key(),
         Immutable.List.of(listener)
       );
     } else {
-      refListeners = refListeners.update(
+      refListeners.update(
         this.key(),
         listeners => listeners.push(listener)
       );
@@ -40,13 +40,13 @@ export class Ref implements Bindable {
   }
 
   removeListener(listener:Listener):this {
-    refListeners = refListeners.update(
+    refListeners.update(
       this.key(),
       listeners => listeners.remove(listeners.indexOf(listener))
     );
     if (refListeners.get(this.key()).isEmpty()) {
-      refListeners = refListeners.remove(this.key());
-      refValues = refValues.remove(this.key());
+      refListeners.remove(this.key());
+      refValues.remove(this.key());
     }
     return this;
   }
@@ -55,7 +55,7 @@ export class Ref implements Bindable {
     if (!refValues.has(this.key()) || !Immutable.is(refValues.get(this.key()), value)) {
       const listeners = refListeners.get(this.key());
       if (listeners) {
-        refValues = refValues.set(this.key(), value);
+        refValues.set(this.key(), value);
         listeners.forEach(listener => listener(value));
       }
     }
