@@ -1,23 +1,23 @@
 import * as Immutable from 'immutable';
 
-import {AnyMapper, AnyListener, Bindable} from './types';
+import {Mapper, Listener, Bindable, Emitter} from './types';
 import {Container} from './container';
 import {ImmutableEmitter} from './immutable-emitter';
 import {makeJSMapper} from './make-js-mapper';
 
-const noMappers = Immutable.List<AnyMapper>();
-const emptyItems = Immutable.List<Container>();
-const emptyIndexListeners = Immutable.Map<number, AnyListener>();
+const noMappers = Immutable.List<Mapper>();
+const emptyItems = Immutable.List<Emitter>();
+const emptyIndexListeners = Immutable.Map<number, Listener>();
 
 export class Chain extends ImmutableEmitter implements Bindable {
 
-  protected source:Container;
-  protected mappers:Immutable.List<AnyMapper>;
+  protected source:Emitter;
+  protected mappers:Immutable.List<Mapper>;
 
-  protected items:Immutable.List<Container> = emptyItems;
-  protected indexListeners:Immutable.Map<number, AnyListener> = emptyIndexListeners;
+  protected items:Immutable.List<Emitter> = emptyItems;
+  protected indexListeners:Immutable.Map<number, Listener> = emptyIndexListeners;
 
-  constructor(source:Container, mappers:Immutable.List<AnyMapper> = noMappers) {
+  constructor(source:Emitter, mappers:Immutable.List<Mapper> = noMappers) {
     super();
     this.mappers = mappers;
     this.source = source;
@@ -45,11 +45,11 @@ export class Chain extends ImmutableEmitter implements Bindable {
     return this.indexListeners.get(index);
   }
 
-  bind(mapper:AnyMapper):Chain {
+  bind(mapper:Mapper):Chain {
     return new Chain(this.source, this.mappers.push(mapper));
   }
 
-  bindJS(mapper:AnyMapper):Chain {
+  bindJS(mapper:Mapper):Chain {
     return this.bind(makeJSMapper(mapper));
   }
 
@@ -64,7 +64,7 @@ export class Chain extends ImmutableEmitter implements Bindable {
     this.setItem(index + 1, new Container(nextValue));
   }
 
-  setItem(index:number, newItem:Container) {
+  setItem(index:number, newItem:Emitter) {
     const oldItem = this.items.get(index);
 
     if (Immutable.is(oldItem, newItem)) {
@@ -82,6 +82,12 @@ export class Chain extends ImmutableEmitter implements Bindable {
     if (oldItem) {
       oldItem.removeListener(this.indexListener(index));
     }
+  }
+
+  equals(other:Chain):boolean {
+    return (other instanceof Chain)
+      && Immutable.is(this.source, other.source)
+      && Immutable.is(this.mappers, other.mappers);
   }
 
 }

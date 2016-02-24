@@ -1,6 +1,6 @@
 import * as Immutable from 'immutable';
 
-import {Emitter, AnyListener} from './types';
+import {Emitter, Listener} from './types';
 
 let open = 0;
 const NO_VALUE = {};
@@ -8,9 +8,9 @@ const NO_VALUE = {};
 export class ImmutableEmitter implements Emitter {
 
   protected previouslyEmitted:any = NO_VALUE;
-  protected listeners:Immutable.List<AnyListener> = Immutable.List<AnyListener>();
+  protected listeners:Immutable.List<Listener> = Immutable.List<Listener>();
 
-  addListener(listener:AnyListener):this {
+  addListener(listener:Listener):this {
     const shouldOpen = this.listeners.isEmpty();
     this.listeners = this.listeners.push(listener);
     if (!Immutable.is(this.previouslyEmitted, NO_VALUE)) {
@@ -22,7 +22,7 @@ export class ImmutableEmitter implements Emitter {
     return this;
   }
 
-  removeListener(listener:AnyListener):this {
+  removeListener(listener:Listener):this {
     this.listeners = this.listeners.remove(this.listeners.indexOf(listener));
     if (this.listeners.isEmpty()) {
       this.close();
@@ -43,6 +43,7 @@ export class ImmutableEmitter implements Emitter {
 
   protected close() {
     console.log('close', --open, (<any>this.constructor).name);
+    this.previouslyEmitted = NO_VALUE;
   }
 
 }

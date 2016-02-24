@@ -1,6 +1,6 @@
 import * as Immutable from 'immutable';
 
-import {AnyListener, AnyMapper, Bindable} from './types';
+import {Listener, Mapper, Bindable} from './types';
 import {ImmutableEmitter} from './immutable-emitter';
 import {makeJSMapper} from './make-js-mapper';
 import {Ref} from './ref';
@@ -12,7 +12,7 @@ type RefMap = Immutable.Map<KeyPath, Ref>;
 
 const emptyKeyPath = Immutable.List<Key>();
 const emptyRefs = Immutable.Map<KeyPath, Ref>();
-const emptyKeyPathListeners = Immutable.Map<KeyPath, AnyListener>();
+const emptyKeyPathListeners = Immutable.Map<KeyPath, Listener>();
 
 function findRefs(value:any, prefix:KeyPath = emptyKeyPath):RefMap {
   if (value instanceof Ref) {
@@ -50,7 +50,7 @@ export class Container extends ImmutableEmitter implements Bindable {
     this.refs = findRefs(this.value);
   }
 
-  keyPathListener(keyPath:KeyPath):AnyListener {
+  keyPathListener(keyPath:KeyPath):Listener {
     if (!this.keyPathListeners.has(keyPath)) {
       this.keyPathListeners = this.keyPathListeners.set(keyPath, this.updateValue.bind(this, keyPath));
     }
@@ -84,16 +84,16 @@ export class Container extends ImmutableEmitter implements Bindable {
     }
   }
 
-  bind(mapper:AnyMapper):Chain {
+  bind(mapper:Mapper):Chain {
     return new Chain(this, Immutable.List.of(mapper));
   }
 
-  bindJS(mapper:AnyMapper):Chain {
+  bindJS(mapper:Mapper):Chain {
     return this.bind(makeJSMapper(mapper));
   }
 
   equals(other:Container):boolean {
-    return other instanceof Container && Immutable.is(this.source, other.source);
+    return (other instanceof Container) && Immutable.is(this.source, other.source);
   }
 
 }

@@ -1,49 +1,80 @@
 import * as Immutable from 'immutable';
 
-import {Bindable, AnyMapper} from './types';
-import {ImmutableEmitter} from './immutable-emitter';
+import {Bindable, Mapper, Listener} from './types';
 import {makeJSMapper} from './make-js-mapper'
 import {Chain} from './chain';
-import {Container} from './container';
 
 type RefKey = string;
 
-let refs = Immutable.Map<RefKey, Ref>();
+let refValues = Immutable.Map<RefKey, any>();
+let refListeners = Immutable.Map<RefKey, Immutable.List<Listener>>();
 
-export class Ref extends ImmutableEmitter implements Bindable {
+export class Ref implements Bindable {
 
-  path:string;
+  protected path:string;
 
   constructor(path:string) {
-    super();
     this.path = path;
   }
 
-  key():RefKey {
+  protected key():RefKey {
     return this.path;
   }
 
-  bind(mapper:AnyMapper):Chain {
-    return new Chain(new Container(this), Immutable.List.of(mapper));
+  addListener(listener:Listener):this {
+    if (!refListeners.has(this.key())) {
+      refListeners = refListeners.set(
+        this.key(),
+        Immutable.List.of(listener)
+      );
+    } else {
+      refListeners = refListeners.update(
+        this.key(),
+        listeners => listeners.push(listener)
+      );
+    }
+    if (refValues.has(this.key())) {
+      listener(refValues.get(this.key()));
+    }
+    return this;
   }
 
-  bindJS(mapper:AnyMapper):Chain {
+  removeListener(listener:Listener):this {
+    refListeners = refListeners.update(
+      this.key(),
+      listeners => listeners.remove(listeners.indexOf(listener))
+    );
+    if (refListeners.get(this.key()).isEmpty()) {
+      refListeners = refListeners.remove(this.key());
+      refValues = refValues.remove(this.key());
+    }
+    return this;
+  }
+
+  emit(value:any) {
+    if (!refValues.has(this.key()) || !Immutable.is(refValues.get(this.key()), value)) {
+      const listeners = refListeners.get(this.key());
+      if (listeners) {
+        refValues = refValues.set(this.key(), value);
+        listeners.forEach(listener => listener(value));
+      }
+    }
+  }
+
+  bind(mapper:Mapper):Chain {
+    return new Chain(this, Immutable.List.of(mapper));
+  }
+
+  bindJS(mapper:Mapper):Chain {
     return this.bind(makeJSMapper(mapper));
   }
 
-  close() {
-    super.close();
-
-    refs = refs.remove(this.key());
+  equals(other:Ref):boolean {
+    return (other instanceof Ref) && Immutable.is(this.key(), other.key());
   }
 
 }
 
 export function ref(path:string = '/'):Ref {
-  const ref = new Ref(path);
-  if (refs.has(ref.key())) {
-    return refs.get(ref.key());
-  }
-  refs = refs.set(ref.key(), ref);
-  return ref;
+  return new Ref(path);
 }
