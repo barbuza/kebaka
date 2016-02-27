@@ -3,9 +3,10 @@ import Immutable from 'immutable';
 
 import { Chain } from '../lib/chain';
 import { ref } from '../lib/ref';
+import { wrap } from '../lib/wrap';
 
 test('Chain', t => {
-  t.plan(4);
+  t.plan(5);
 
   const id = x => x;
   t.ok(Immutable.is(ref().bind(id).source, ref()));
@@ -26,6 +27,18 @@ test('Chain', t => {
   c.addListener(notOkListener);
 
   ref().emit(false);
+
+  const testChain = wrap({
+    a: ref('/a'),
+    b: ref('/b')
+  }).bindJS(({ a, b }) => ({ a, b, c: ref('/c') }))
+    .bindJS(({ a, b, c }) => a + b + c);
+
+  testChain.addListener(value => t.equal(value, 6));
+
+  ref('/a').emit(1);
+  ref('/b').emit(2);
+  ref('/c').emit(3);
 
   t.end();
 });
