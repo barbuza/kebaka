@@ -1,7 +1,7 @@
 import * as Immutable from 'immutable';
 import asap from 'asap';
 
-import {ref} from './ref';
+import {wrap} from './wrap';
 import {Emitter, Gen, GenIterator, Listener} from './types';
 import {ImmutableEmitter} from './immutable-emitter';
 
@@ -62,8 +62,9 @@ export class Proc extends ImmutableEmitter {
     if (res.done) {
       this.emit(Immutable.fromJS(res.value));
     } else {
-      this.deps = this.deps.push(res.value);
-      res.value.addListener(this.stepListener(this.step));
+      const emitter = wrap(res.value);
+      this.deps = this.deps.push(emitter);
+      emitter.addListener(this.stepListener(this.step));
     }
   }
 
