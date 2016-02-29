@@ -1,8 +1,8 @@
 import test from 'tape';
 import Immutable from 'immutable';
 
-import { ref, Ref } from '../lib/ref';
-import { Chain } from '../lib/chain';
+import { ref, Ref } from '../es6/ref';
+import { Chain } from '../es6/chain';
 
 test('Ref', t => {
   t.plan(3);

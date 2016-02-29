@@ -1,4 +1,5 @@
 /node_modules
 /lib
+/es6
 /.idea
 /.nyc_output

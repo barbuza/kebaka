@@ -1,9 +1,9 @@
 import test from 'tape';
 import Immutable from 'immutable';
 
-import { Ref, ref } from '../lib/ref';
-import { Container } from '../lib/container'
-import { wrap } from '../lib/wrap';
+import { Ref, ref } from '../es6/ref';
+import { Container } from '../es6/container'
+import { wrap } from '../es6/wrap';
 
 test('wrap', t => {
   t.ok(Immutable.is(ref(), wrap(ref())));

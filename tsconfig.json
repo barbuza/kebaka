@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
-    "target": "es3",
-    "module": "commonjs",
+    "target": "es6",
+    "module": "es6",
     "noImplicitAny": true,
-    "outDir": "lib"
+    "outDir": "es6"
   },
   "files": [
     "node_modules/immutable/dist/immutable.d.ts",
+    "src/asap.d.ts",
     "src/types.ts",
     "src/immutable-emitter.ts",
     "src/make-js-mapper.ts",
@@ -14,6 +15,7 @@
     "src/container.ts",
     "src/chain.ts",
     "src/wrap.ts",
+    "src/proc.ts",
     "src/index.ts"
   ]
 }

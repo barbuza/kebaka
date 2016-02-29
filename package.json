@@ -5,12 +5,14 @@
   "main": "index.js",
   "scripts": {
     "prepublish": "npm run build && npm test",
-    "build": "tsc",
-    "test": "nyc -i babel-register tape tests/*.js"
+    "build": "tsc && babel -d lib es6",
+    "test": "nyc -i babel-register -i babel-polyfill tape tests/*.js"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "babel-cli": "^6.5.1",
+    "babel-polyfill": "^6.5.0",
     "babel-preset-es2015": "^6.5.0",
     "babel-register": "^6.5.2",
     "nyc": "^5.6.0",
@@ -19,6 +21,7 @@
     "typescript": "^1.8.2"
   },
   "dependencies": {
+    "asap": "^2.0.3",
     "immutable": "^3.7.6"
   }
 }

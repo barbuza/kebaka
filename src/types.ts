@@ -15,3 +15,7 @@ export interface Bindable extends Emitter {
   bind(mapper:Mapper):Bindable;
   bindJS(mapper:Mapper):Bindable;
 }
+
+export type GenIterator = IterableIterator<Emitter>
+
+export type Gen = () => GenIterator;
